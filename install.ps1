@@ -1,12 +1,11 @@
 #Get server and key
 param($server, $key, $tls)
-# Download latest release from github
+# Download fixed version from gitee
 if($PSVersionTable.PSVersion.Major -lt 5){
     Write-Host "Require PS >= 5,your PSVersion:"$PSVersionTable.PSVersion.Major -BackgroundColor DarkGreen -ForegroundColor White
     Write-Host "Refer to the community article and install manually! https://nyko.me/2020/12/13/nezha-windows-client.html" -BackgroundColor DarkRed -ForegroundColor Green
     exit
 }
-$agentrepo = "nezhahq/agent"
 #  x86 or x64 or arm64
 if ([System.Environment]::Is64BitOperatingSystem) {
     if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") {
@@ -18,7 +17,7 @@ if ([System.Environment]::Is64BitOperatingSystem) {
 else {
     $file = "nezha-agent_windows_386.zip"
 }
-$agentreleases = "https://api.github.com/repos/$agentrepo/releases"
+
 #重复运行自动更新
 if (Test-Path "C:\nezha\nezha-agent.exe") {
     Write-Host "Nezha monitoring already exists, delete and reinstall" -BackgroundColor DarkGreen -ForegroundColor White
@@ -28,30 +27,7 @@ if (Test-Path "C:\nezha\nezha-agent.exe") {
 #TLS/SSL
 Write-Host "Using fixed version v0.20.5" -BackgroundColor DarkGreen -ForegroundColor White
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$agenttag = "v0.20.5" # 固定版本号
-#Region判断
-$ipapi = ""
-$region = "Unknown"
-foreach ($url in ("https://dash.cloudflare.com/cdn-cgi/trace","https://developers.cloudflare.com/cdn-cgi/trace","https://1.0.0.1/cdn-cgi/trace")) {
-    try {
-        $ipapi = Invoke-RestMethod -Uri $url -TimeoutSec 5 -UseBasicParsing
-        if ($ipapi -match "loc=(\w+)" ) {
-            $region = $Matches[1]
-            break
-        }
-    }
-    catch {
-        Write-Host "Error occurred while querying $url : $_"
-    }
-}
-echo $ipapi
-if($region -ne "CN"){
-    $download = "https://github.com/$agentrepo/releases/download/$agenttag/$file"
-    Write-Host "Location:$region,connect directly!" -BackgroundColor DarkRed -ForegroundColor Green
-}else{
-    $download = "https://gitee.com/pei_qiang_yang/agent/raw/main/agent-v0.20.5.zip"
-    Write-Host "Location:CN,use fixed mirror address" -BackgroundColor DarkRed -ForegroundColor Green
-}
+$download = "https://gitee.com/pei_qiang_yang/agent/raw/main/agent-v0.20.5.zip"
 echo $download
 Invoke-WebRequest $download -OutFile "C:\nezha.zip"
 #解压
